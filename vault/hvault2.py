@@ -1,6 +1,6 @@
 # Between python 3.7.4 and 3.7.6
 import requests
-from pyvault.constants.pyvault_config import *
+from pyvault2.constants.pyvault_config import *
 import json
 from cryptography.fernet import Fernet, InvalidToken
 from glob import glob
