@@ -246,12 +246,3 @@ def delete_kv2_secrets_permanently(versions, mount_path=None, path=None):
         "versions": versions
     }
     requests.post(VAULT_ADDRESS + api_path, headers=headers, data=json.dumps(payload), verify=False)
-
-
-current_version = get_kv2_secret_version(mount_path="lab", path="asa_fw")
-create_update_kv2_secrets(username="cyruslab",
-                          password="P@ssw0rd21012020",
-                          description="There is a modification",
-                          mount_path="lab",
-                          path="asa_fw",
-                          cas=current_version)
