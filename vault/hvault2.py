@@ -181,7 +181,7 @@ def disable_engine(path=None):
 
 
 @vault_seal_mgmt
-def create_update_kv2_secrets(username=None, password=None, description=None, mount_path=None, path=None, cas=0):
+def create_update_kv2_secrets(mount_path=None, path=None, cas=0, **kwargs):
     """
     :param username: username
     :param password: password
@@ -197,11 +197,7 @@ def create_update_kv2_secrets(username=None, password=None, description=None, mo
         "options": {
             "cas": cas
         },
-        "data": {
-            "username": username,
-            "password": password,
-            "description": description
-        }
+        "data": kwargs
     }
     api_path = f"/v1/{mount_path}/data/{path}"
     api_request = {
@@ -249,9 +245,9 @@ def kv2_secret_filter(fn):
 
 
 @vault_seal_mgmt
-def delete_kv2_secrets_permanently(versions, mount_path=None, path=None):
+def delete_kv2_secret_version(versions, mount_path=None, path=None):
     """
-    Deletes a secret version permanently.
+    Deletes a specific secret version.
     :param versions: accepts a list
     :param mount_path: the mount path you wish to delete from
     :param path: the path under mount path you wish to delete from.
@@ -272,3 +268,16 @@ def get_kv2_secret(mount_path=None, path=None, find=None):
         "path": path,
         "filter": find
     }
+
+
+@vault_seal_mgmt
+def delete_kv2_secret_path(mount_path=None, path=None):
+    """
+    Permanently removes a path under the mount_path, all versions and keys will be removed permanently.
+    This deletes the metadata of keys and all versions data, hence unable to undelete.
+    :param mount_path: The mount_path specified when you start a new engine.
+    :param path: The path under the mount_path.
+    """
+    headers = insert_token_in_headers()
+    api_path = f"/v1/{mount_path}/metadata/{path}"
+    requests.delete(VAULT_ADDRESS + api_path, headers=headers, verify=False)
