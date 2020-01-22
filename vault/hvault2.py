@@ -1,6 +1,6 @@
 # Between python 3.7.4 and 3.7.6
 import requests
-from pyvault.constants.pyvault_config import *
+from pyvault2.constants.pyvault_config import *
 import json
 from cryptography.fernet import Fernet, InvalidToken
 from glob import glob
@@ -133,9 +133,9 @@ def vault_seal_mgmt(fn):
             unseal_vault()
         response = fn(*args, **kwargs)
         seal_vault()
-        '''
+        """
         Not all functions return response, if there is return the response.
-        '''
+        """
         if response:
             return response
     return wrapper
@@ -216,7 +216,7 @@ def create_update_kv2_secrets(username=None, password=None, description=None, mo
 
 
 @vault_seal_mgmt
-def get_kv2_secret_version(mount_path=None, path=None):
+def kv2_secret_data(mount_path=None, path=None):
     """
     Get the current version of the secret
     :param mount_path: specify the mount path
@@ -227,8 +227,25 @@ def get_kv2_secret_version(mount_path=None, path=None):
     headers = insert_token_in_headers()
     api_path = f"/v1/{mount_path}/data/{path}"
     response = requests.get(VAULT_ADDRESS + api_path, headers=headers, verify=False)
-    version = json.loads(response.text)
-    return version["data"]["metadata"]["version"]
+    data = json.loads(response.text)
+    return data
+
+
+def kv2_secret_filter(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        data_dict = fn(*args, **kwargs)
+        data = kv2_secret_data(mount_path=data_dict["mount_path"], path=data_dict["path"])
+
+        if data_dict['filter'] == "version":
+            return data["data"]["metadata"]["version"]
+        elif data_dict["filter"] == "data":
+            return data["data"]["data"]
+        elif data_dict["filter"] == "destroyed":
+            return data["data"]["metadata"]["destroyed"]
+        elif data_dict["filter"] == "created_time":
+            return data["data"]["metadata"]["created_time"]
+    return wrapper
 
 
 @vault_seal_mgmt
@@ -246,3 +263,12 @@ def delete_kv2_secrets_permanently(versions, mount_path=None, path=None):
         "versions": versions
     }
     requests.post(VAULT_ADDRESS + api_path, headers=headers, data=json.dumps(payload), verify=False)
+
+
+@kv2_secret_filter
+def get_kv2_secret(mount_path=None, path=None, find=None):
+    return {
+        "mount_path": mount_path,
+        "path": path,
+        "filter": find
+    }
