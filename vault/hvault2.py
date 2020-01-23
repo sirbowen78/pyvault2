@@ -237,16 +237,16 @@ def kv2_secret_filter(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         data_dict = fn(*args, **kwargs)
-        data = kv2_secret_data(mount_path=data_dict["mount_path"], path=data_dict["path"])
+        response = kv2_secret_data(mount_path=data_dict["mount_path"], path=data_dict["path"])
 
         if data_dict['filter'] == "version":
-            return data["data"]["metadata"]["version"]
+            return response["data"]["metadata"]["version"]
         elif data_dict["filter"] == "data":
-            return data["data"]["data"]
+            return response["data"]["data"]
         elif data_dict["filter"] == "destroyed":
-            return data["data"]["metadata"]["destroyed"]
+            return response["data"]["metadata"]["destroyed"]
         elif data_dict["filter"] == "created_time":
-            return data["data"]["metadata"]["created_time"]
+            return response["data"]["metadata"]["created_time"]
     return wrapper
 
 
