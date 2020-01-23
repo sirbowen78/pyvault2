@@ -6,6 +6,8 @@ from cryptography.fernet import Fernet, InvalidToken
 from glob import glob
 import os
 from functools import wraps
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def get_cipher_key():
@@ -135,8 +137,12 @@ def vault_seal_mgmt(fn):
         seal_vault()
         """
         Not all functions return response, if there is return the response.
-        """
+        Do not use the shortcut:
         if response:
+            return response
+        Because boolean will also match the condition, has to be specifically not None object.
+        """
+        if response is not None:
             return response
     return wrapper
 
@@ -153,7 +159,7 @@ def insert_token_in_headers():
 
 
 @vault_seal_mgmt
-def enable_kv2_engine(path="kv"):
+def enable_kv2_engine(mount_path="kv"):
     """
     Enable a KV version 2 engine.
     This function only handles type kv.
@@ -167,17 +173,17 @@ def enable_kv2_engine(path="kv"):
             "version": "2"
         }
     }
-    requests.post(VAULT_ADDRESS + VAULT_MNT + path, headers=headers, data=json.dumps(payload), verify=False)
+    requests.post(VAULT_ADDRESS + VAULT_MNT + mount_path, headers=headers, data=json.dumps(payload), verify=False)
 
 
 @vault_seal_mgmt
-def disable_engine(path=None):
+def disable_engine(mount_path=None):
     """
     Deletes the engine with the path specified.
-    :param path: the path which needs to delete.
+    :param mount_path: the path which needs to delete.
     """
     headers = insert_token_in_headers()
-    requests.delete(VAULT_ADDRESS + VAULT_MNT + path, headers=headers, verify=False)
+    requests.delete(VAULT_ADDRESS + VAULT_MNT + mount_path, headers=headers, verify=False)
 
 
 @vault_seal_mgmt
@@ -281,3 +287,14 @@ def delete_kv2_secret_path(mount_path=None, path=None):
     headers = insert_token_in_headers()
     api_path = f"/v1/{mount_path}/metadata/{path}"
     requests.delete(VAULT_ADDRESS + api_path, headers=headers, verify=False)
+
+
+@vault_seal_mgmt
+def is_secret_path_exists(mount_path=None, path=None):
+    headers = insert_token_in_headers()
+    api_path = f"/v1/{mount_path}/data/{path}"
+    response = requests.get(VAULT_ADDRESS + api_path, headers=headers, verify=False)
+    if response.status_code == 404:
+        return False
+    else:
+        return True
