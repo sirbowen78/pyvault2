@@ -1,5 +1,6 @@
 # CONSTANTS. Linux environment.
 from pathlib import Path
+
 HOME = str(Path.home())
 
 # change filenames here.
@@ -32,3 +33,6 @@ VAULT_SEAL_STATUS = "/v1/sys/seal-status"
 
 # PUT UNSEAL VAULT, ONE KEY PER CALL
 VAULT_UNSEAL = "/v1/sys/unseal"
+
+# CREATE TOKEN URI
+CREATE_TOKEN = "/v1/auth/token/create"
